@@ -97,7 +97,7 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 			&ec2.RouteTableAssociationArgs{
 				RouteTableId: createdPublicRouteTable.ID(),
 				SubnetId:     createdPublicSubnet.ID(),
-			})
+			}, pulumi.Parent(createdPublicRouteTable))
 		if err != nil {
 			return errors.Wrap(err, "error associating route table with public subnet")
 		}
@@ -105,7 +105,7 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 
 	// create nat gateways for each private subnet
 	if locals.AwsVpc.Spec.IsNatGatewayEnabled {
-		if err := natGateways(ctx, awsProvider, createdVpc, createdPrivateSubnets); err != nil {
+		if err := natGateways(ctx, createdVpc, createdPrivateSubnets); err != nil {
 			return errors.Wrap(err, "failed to create nat gateways")
 		}
 	}

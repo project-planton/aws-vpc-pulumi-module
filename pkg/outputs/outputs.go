@@ -6,7 +6,6 @@ import (
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
 	"github.com/plantoncloud/stack-job-runner-golang-sdk/pkg/automationapi/autoapistackoutput"
 	"github.com/pulumi/pulumi/sdk/v3/go/auto"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 const (
@@ -14,19 +13,18 @@ const (
 	InternetGatewayId = "internet-gateway-id"
 )
 
-func PulumiOutputsToStackOutputsConverter(ctx *pulumi.Context,
-	stackInput *awsvpc.AwsVpcStackInput, pulumiOutputs auto.OutputMap) *awsvpc.AwsVpcStackOutputs {
-
+func PulumiOutputsToStackOutputsConverter(pulumiOutputs auto.OutputMap, stackInput *awsvpc.AwsVpcStackInput) *awsvpc.AwsVpcStackOutputs {
 	resp := &awsvpc.AwsVpcStackOutputs{
 		VpcId:             autoapistackoutput.GetVal(pulumiOutputs, VpcId),
 		InternetGatewayId: autoapistackoutput.GetVal(pulumiOutputs, InternetGatewayId),
 	}
 
-	locals := localz.Initialize(ctx, stackInput)
+	privateSubnetMap := localz.GetPrivateSubnetMap(stackInput.ApiResource)
+	publicSubnetMap := localz.GetPrivateSubnetMap(stackInput.ApiResource)
 
 	privateSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
 	natGatewayOutputs := make([]*awsvpc.AwsVpcNatGatewayStackOutputs, 0)
-	for _, subnetNameCidrMap := range locals.PrivateSubnetMap {
+	for _, subnetNameCidrMap := range privateSubnetMap {
 		for subnetName, _ := range subnetNameCidrMap {
 			privateSubnetOutputs = append(privateSubnetOutputs, &awsvpc.AwsVpcSubnetStackOutputs{
 				Name: string(subnetName),
@@ -43,7 +41,7 @@ func PulumiOutputsToStackOutputsConverter(ctx *pulumi.Context,
 	}
 
 	publicSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
-	for _, subnetNameCidrMap := range locals.PublicSubnetMap {
+	for _, subnetNameCidrMap := range publicSubnetMap {
 		for subnetName, _ := range subnetNameCidrMap {
 			publicSubnetOutputs = append(publicSubnetOutputs, &awsvpc.AwsVpcSubnetStackOutputs{
 				Name: string(subnetName),

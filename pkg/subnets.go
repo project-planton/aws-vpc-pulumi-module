@@ -57,6 +57,8 @@ func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (p
 				return nil, nil, errors.Wrapf(err,
 					"error creating public subnet %s", subnetName)
 			}
+			ctx.Export(outputs.SubnetIdOutputKey(string(subnetName)), createdSubnet.ID())
+			ctx.Export(outputs.SubnetCidrOutputKey(string(subnetName)), createdSubnet.CidrBlock)
 			publicSubnets = append(publicSubnets, createdSubnet)
 		}
 
