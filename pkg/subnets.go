@@ -10,11 +10,11 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (privateSubnets,
-	publicSubnets []*ec2.Subnet, err error) {
+func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (privateSubnetMap,
+	publicSubnetMap map[localz.SubnetName]*ec2.Subnet, err error) {
 
-	privateSubnets = make([]*ec2.Subnet, 0)
-	publicSubnets = make([]*ec2.Subnet, 0)
+	privateSubnetMap = make(map[localz.SubnetName]*ec2.Subnet, 0)
+	publicSubnetMap = make(map[localz.SubnetName]*ec2.Subnet, 0)
 
 	// iterate through azs and create the configured number of public and private subnets per az
 	sortedPrivateAzKeys := localz.GetSortedAzKeys(locals.PrivateAzSubnetMap)
@@ -39,7 +39,7 @@ func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (p
 			}
 			ctx.Export(outputs.SubnetIdOutputKey(subnetName), createdSubnet.ID())
 			ctx.Export(outputs.SubnetCidrOutputKey(subnetName), createdSubnet.CidrBlock)
-			privateSubnets = append(privateSubnets, createdSubnet)
+			privateSubnetMap[localz.SubnetName(subnetName)] = createdSubnet
 		}
 	}
 
@@ -67,9 +67,9 @@ func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (p
 			}
 			ctx.Export(outputs.SubnetIdOutputKey(subnetName), createdSubnet.ID())
 			ctx.Export(outputs.SubnetCidrOutputKey(subnetName), createdSubnet.CidrBlock)
-			publicSubnets = append(publicSubnets, createdSubnet)
+			publicSubnetMap[localz.SubnetName(subnetName)] = createdSubnet
 		}
 
 	}
-	return privateSubnets, publicSubnets, nil
+	return privateSubnetMap, publicSubnetMap, nil
 }

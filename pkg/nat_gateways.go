@@ -9,12 +9,15 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func natGateways(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc, createdPrivateSubnets []*ec2.Subnet) error {
+func natGateways(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc,
+	createdPrivateSubnetMap map[localz.SubnetName]*ec2.Subnet) error {
+	sortedCreatedSubnetNameKeys := localz.GetSortedCreatedSubnetNameKeys(createdPrivateSubnetMap)
 	// create nat gateways for private subnets
-	for i, createdPrivateSubnet := range createdPrivateSubnets {
+	for _, subnetName := range sortedCreatedSubnetNameKeys {
+		createdPrivateSubnet := createdPrivateSubnetMap[localz.SubnetName(subnetName)]
 		//create elastic ip for nat gateway
 		createdElasticIp, err := ec2.NewEip(ctx,
-			fmt.Sprintf("nat-eip-%d", i),
+			fmt.Sprintf("nat-%s", subnetName),
 			&ec2.EipArgs{
 				Tags: AddEntryToPulumiStringMap(pulumi.ToStringMap(locals.AwsTags), "Name",
 					pulumi.Sprintf("%s-nat", createdPrivateSubnet.ID())),
@@ -25,32 +28,24 @@ func natGateways(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc
 
 		//create nat gateway
 		createdNatGateway, err := ec2.NewNatGateway(ctx,
-			fmt.Sprintf("nat-gateway-%d", i),
+			subnetName,
 			&ec2.NatGatewayArgs{
 				SubnetId:     createdPrivateSubnet.ID(),
 				AllocationId: createdElasticIp.ID(),
-				Tags:         AddIdValueEntryToPulumiStringMap(pulumi.ToStringMap(locals.AwsTags), "Name", createdPrivateSubnet.ID()),
+				Tags: AddIdValueEntryToPulumiStringMap(pulumi.ToStringMap(locals.AwsTags),
+					"Name", createdPrivateSubnet.ID()),
 			}, pulumi.Parent(createdPrivateSubnet))
 		if err != nil {
 			return errors.Wrap(err, "error creating nat gateway")
 		}
 
-		createdNatGateway.ID().ApplyT(func(id string) error {
-			// Extract and export the 'Name' tag from the subnet using Apply
-			createdPrivateSubnet.Tags.ApplyT(func(tags map[string]string) error {
-				if nameTag, ok := tags["Name"]; ok {
-					ctx.Export(outputs.NatGatewayIdOutputKey(nameTag), pulumi.String(id))
-					ctx.Export(outputs.NatGatewayPublicIpOutputKey(nameTag), createdNatGateway.PublicIp)
-					ctx.Export(outputs.NatGatewayPrivateIpOutputKey(nameTag), createdNatGateway.PrivateIp)
-				}
-				return nil
-			})
-			return nil
-		})
+		ctx.Export(outputs.NatGatewayIdOutputKey(subnetName), createdNatGateway.ID())
+		ctx.Export(outputs.NatGatewayPublicIpOutputKey(subnetName), createdNatGateway.PublicIp)
+		ctx.Export(outputs.NatGatewayPrivateIpOutputKey(subnetName), createdNatGateway.PrivateIp)
 
 		// private route table to route traffic through nat gateway
 		createdPrivateRouteTable, err := ec2.NewRouteTable(ctx,
-			fmt.Sprintf("private-route-table-%d", i),
+			fmt.Sprintf("private-route-table-%s", subnetName),
 			&ec2.RouteTableArgs{
 				VpcId: createdVpc.ID(),
 				Routes: ec2.RouteTableRouteArray{
@@ -68,7 +63,7 @@ func natGateways(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc
 
 		// associate private route table with private subnets
 		_, err = ec2.NewRouteTableAssociation(ctx,
-			fmt.Sprintf("private-route-assoc-%d", i),
+			fmt.Sprintf("private-route-assoc-%s", subnetName),
 			&ec2.RouteTableAssociationArgs{
 				RouteTableId: createdPrivateRouteTable.ID(),
 				SubnetId:     createdPrivateSubnet.ID(),
