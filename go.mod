@@ -12,6 +12,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/plantoncloud/planton-cloud-apis v0.1.51
 	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240908125326-b14bd8a5b127
+	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.59
 	github.com/pulumi/pulumi-aws/sdk/v6 v6.42.1
 	github.com/pulumi/pulumi/sdk/v3 v3.129.0
 )

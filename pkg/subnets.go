@@ -2,13 +2,15 @@ package pkg
 
 import (
 	"github.com/pkg/errors"
+	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
+	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps/convertstringmaps"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func subnets(ctx *pulumi.Context, locals *Locals, createdVpc *ec2.Vpc) (privateSubnets,
+func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (privateSubnets,
 	publicSubnets []*ec2.Subnet, err error) {
 
 	privateSubnets = make([]*ec2.Subnet, 0)
@@ -31,9 +33,10 @@ func subnets(ctx *pulumi.Context, locals *Locals, createdVpc *ec2.Vpc) (privateS
 				return nil, nil,
 					errors.Wrapf(err, "error creating private subnet %s", subnetName)
 			}
+			ctx.Export(outputs.SubnetIdOutputKey(string(subnetName)), createdSubnet.ID())
+			ctx.Export(outputs.SubnetCidrOutputKey(string(subnetName)), createdSubnet.CidrBlock)
 			privateSubnets = append(privateSubnets, createdSubnet)
 		}
-
 	}
 
 	for availabilityZone, subnetNameCidrMap := range locals.PublicSubnetMap {

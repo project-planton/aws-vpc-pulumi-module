@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
@@ -17,7 +18,7 @@ type ResourceStack struct {
 }
 
 func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
-	locals := initializeLocals(ctx, s.StackInput)
+	locals := localz.Initialize(ctx, s.StackInput)
 
 	awsCredential := s.StackInput.AwsCredential
 

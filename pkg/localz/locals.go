@@ -1,4 +1,4 @@
-package pkg
+package localz
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ type Locals struct {
 	PublicSubnetMap  map[AvailabilityZone]map[SubnetName]SubnetCidr
 }
 
-func initializeLocals(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Locals {
+func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Locals {
 	locals := &Locals{}
 
 	locals.AwsTags = map[string]string{

@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -29,6 +30,17 @@ func natGateways(ctx *pulumi.Context, awsProvider *aws.Provider, createdVpc *ec2
 		if err != nil {
 			return errors.Wrap(err, "error creating nat gateway")
 		}
+
+		// Extract and export the 'Name' tag from the subnet using Apply
+		createdPrivateSubnet.Tags.ApplyT(func(tags map[string]string) (string, error) {
+			if nameTag, ok := tags["Name"]; ok {
+				ctx.Export(outputs.NatGatewayIdOutputKey(nameTag), createdNatGateway.ID())
+				ctx.Export(outputs.NatGatewayPublicIpOutputKey(nameTag), createdNatGateway.PublicIp)
+				ctx.Export(outputs.NatGatewayPrivateIpOutputKey(nameTag), createdNatGateway.PrivateIp)
+				return nameTag, nil
+			}
+			return "No Name Tag", nil
+		})
 
 		// private route table to route traffic through nat gateway
 		createdPrivateRouteTable, err := ec2.NewRouteTable(ctx,
