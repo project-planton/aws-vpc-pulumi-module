@@ -19,8 +19,8 @@ func PulumiOutputsToStackOutputsConverter(pulumiOutputs auto.OutputMap, stackInp
 		InternetGatewayId: autoapistackoutput.GetVal(pulumiOutputs, InternetGatewayId),
 	}
 
-	privateSubnetMap := localz.GetPrivateSubnetMap(stackInput.ApiResource)
-	publicSubnetMap := localz.GetPrivateSubnetMap(stackInput.ApiResource)
+	privateSubnetMap := localz.GetPrivateAzSubnetMap(stackInput.ApiResource)
+	publicSubnetMap := localz.GetPrivateAzSubnetMap(stackInput.ApiResource)
 
 	privateSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
 	natGatewayOutputs := make([]*awsvpc.AwsVpcNatGatewayStackOutputs, 0)

@@ -105,7 +105,7 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 
 	// create nat gateways for each private subnet
 	if locals.AwsVpc.Spec.IsNatGatewayEnabled {
-		if err := natGateways(ctx, createdVpc, createdPrivateSubnets); err != nil {
+		if err := natGateways(ctx, locals, createdVpc, createdPrivateSubnets); err != nil {
 			return errors.Wrap(err, "failed to create nat gateways")
 		}
 	}

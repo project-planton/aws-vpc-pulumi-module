@@ -3,18 +3,22 @@ package pkg
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func natGateways(ctx *pulumi.Context, createdVpc *ec2.Vpc, createdPrivateSubnets []*ec2.Subnet) error {
+func natGateways(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc, createdPrivateSubnets []*ec2.Subnet) error {
 	// create nat gateways for private subnets
 	for i, createdPrivateSubnet := range createdPrivateSubnets {
 		//create elastic ip for nat gateway
 		createdElasticIp, err := ec2.NewEip(ctx,
 			fmt.Sprintf("nat-eip-%d", i),
-			&ec2.EipArgs{}, pulumi.Parent(createdPrivateSubnet))
+			&ec2.EipArgs{
+				Tags: AddEntryToPulumiStringMap(pulumi.ToStringMap(locals.AwsTags), "Name",
+					pulumi.Sprintf("%s-nat", createdPrivateSubnet.ID())),
+			}, pulumi.Parent(createdPrivateSubnet))
 		if err != nil {
 			return errors.Wrap(err, "error creating eip for nat gateway")
 		}
@@ -25,6 +29,7 @@ func natGateways(ctx *pulumi.Context, createdVpc *ec2.Vpc, createdPrivateSubnets
 			&ec2.NatGatewayArgs{
 				SubnetId:     createdPrivateSubnet.ID(),
 				AllocationId: createdElasticIp.ID(),
+				Tags:         AddIdValueEntryToPulumiStringMap(pulumi.ToStringMap(locals.AwsTags), "Name", createdPrivateSubnet.ID()),
 			}, pulumi.Parent(createdPrivateSubnet))
 		if err != nil {
 			return errors.Wrap(err, "error creating nat gateway")
@@ -54,6 +59,8 @@ func natGateways(ctx *pulumi.Context, createdVpc *ec2.Vpc, createdPrivateSubnets
 						NatGatewayId: createdNatGateway.ID(),
 					},
 				},
+				Tags: AddEntryToPulumiStringMap(pulumi.ToStringMap(locals.AwsTags), "Name",
+					pulumi.Sprintf("%s-private", createdPrivateSubnet.ID())),
 			}, pulumi.Parent(createdNatGateway))
 		if err != nil {
 			return errors.Wrap(err, "error creating private route table")
@@ -63,12 +70,22 @@ func natGateways(ctx *pulumi.Context, createdVpc *ec2.Vpc, createdPrivateSubnets
 		_, err = ec2.NewRouteTableAssociation(ctx,
 			fmt.Sprintf("private-route-assoc-%d", i),
 			&ec2.RouteTableAssociationArgs{
-				SubnetId:     createdPrivateSubnet.ID(),
 				RouteTableId: createdPrivateRouteTable.ID(),
+				SubnetId:     createdPrivateSubnet.ID(),
 			}, pulumi.Parent(createdPrivateRouteTable))
 		if err != nil {
 			return errors.Wrap(err, "error associating private route table")
 		}
 	}
 	return nil
+}
+
+func AddIdValueEntryToPulumiStringMap(m pulumi.StringMap, key string, id pulumi.IDOutput) pulumi.StringMap {
+	m[key] = id
+	return m
+}
+
+func AddEntryToPulumiStringMap(m pulumi.StringMap, key string, id pulumi.StringOutput) pulumi.StringMap {
+	m[key] = id
+	return m
 }

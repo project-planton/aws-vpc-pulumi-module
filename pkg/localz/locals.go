@@ -6,6 +6,7 @@ import (
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/aws/awstagkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"sort"
 	"strconv"
 )
 
@@ -14,10 +15,10 @@ type SubnetCidr string
 type AvailabilityZone string
 
 type Locals struct {
-	AwsVpc           *awsvpc.AwsVpc
-	AwsTags          map[string]string
-	PrivateSubnetMap map[AvailabilityZone]map[SubnetName]SubnetCidr
-	PublicSubnetMap  map[AvailabilityZone]map[SubnetName]SubnetCidr
+	AwsVpc             *awsvpc.AwsVpc
+	AwsTags            map[string]string
+	PrivateAzSubnetMap map[AvailabilityZone]map[SubnetName]SubnetCidr
+	PublicAzSubnetMap  map[AvailabilityZone]map[SubnetName]SubnetCidr
 }
 
 func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Locals {
@@ -34,14 +35,14 @@ func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Local
 		awstagkeys.ResourceId:   locals.AwsVpc.Metadata.Id,
 	}
 
-	locals.PrivateSubnetMap = GetPrivateSubnetMap(locals.AwsVpc)
-	locals.PublicSubnetMap = GetPublicSubnetMap(locals.AwsVpc)
+	locals.PrivateAzSubnetMap = GetPrivateAzSubnetMap(locals.AwsVpc)
+	locals.PublicAzSubnetMap = GetPublicAzSubnetMap(locals.AwsVpc)
 
 	return locals
 }
 
-func GetPrivateSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
-	privateSubnetMap := make(map[AvailabilityZone]map[SubnetName]SubnetCidr, 0)
+func GetPrivateAzSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
+	privateAzSubnetMap := make(map[AvailabilityZone]map[SubnetName]SubnetCidr, 0)
 
 	for azIndex, az := range awsVpc.Spec.AvailabilityZones {
 		for subnetIndex := 0; subnetIndex < int(awsVpc.Spec.SubnetsPerAvailabilityZone); subnetIndex++ {
@@ -51,19 +52,19 @@ func GetPrivateSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetN
 			privateSubnetCidr := fmt.Sprintf("10.0.%d.0/%d", 100+azIndex*10+subnetIndex, awsVpc.Spec.SubnetSize)
 
 			// Initialize the map for this AvailabilityZone if it doesn't exist
-			if privateSubnetMap[AvailabilityZone(az)] == nil {
-				privateSubnetMap[AvailabilityZone(az)] = make(map[SubnetName]SubnetCidr)
+			if privateAzSubnetMap[AvailabilityZone(az)] == nil {
+				privateAzSubnetMap[AvailabilityZone(az)] = make(map[SubnetName]SubnetCidr)
 			}
 
 			//add private subnet to the locals map
-			privateSubnetMap[AvailabilityZone(az)][SubnetName(privateSubnetName)] = SubnetCidr(privateSubnetCidr)
+			privateAzSubnetMap[AvailabilityZone(az)][SubnetName(privateSubnetName)] = SubnetCidr(privateSubnetCidr)
 		}
 	}
-	return privateSubnetMap
+	return privateAzSubnetMap
 }
 
-func GetPublicSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
-	publicSubnetMap := make(map[AvailabilityZone]map[SubnetName]SubnetCidr, 0)
+func GetPublicAzSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
+	publicAzSubnetMap := make(map[AvailabilityZone]map[SubnetName]SubnetCidr, 0)
 
 	for azIndex, az := range awsVpc.Spec.AvailabilityZones {
 		for subnetIndex := 0; subnetIndex < int(awsVpc.Spec.SubnetsPerAvailabilityZone); subnetIndex++ {
@@ -72,12 +73,34 @@ func GetPublicSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetNa
 			//calculate public subnet cidr
 			publicSubnetCidr := fmt.Sprintf("10.0.%d.0/%d", azIndex*10+subnetIndex, awsVpc.Spec.SubnetSize)
 			// Initialize the map for this AvailabilityZone if it doesn't exist
-			if publicSubnetMap[AvailabilityZone(az)] == nil {
-				publicSubnetMap[AvailabilityZone(az)] = make(map[SubnetName]SubnetCidr)
+			if publicAzSubnetMap[AvailabilityZone(az)] == nil {
+				publicAzSubnetMap[AvailabilityZone(az)] = make(map[SubnetName]SubnetCidr)
 			}
 			//add public subnet to the locals map
-			publicSubnetMap[AvailabilityZone(az)][SubnetName(publicSubnetName)] = SubnetCidr(publicSubnetCidr)
+			publicAzSubnetMap[AvailabilityZone(az)][SubnetName(publicSubnetName)] = SubnetCidr(publicSubnetCidr)
 		}
 	}
-	return publicSubnetMap
+	return publicAzSubnetMap
+}
+
+func GetSortedAzKeys(azSubnetMap map[AvailabilityZone]map[SubnetName]SubnetCidr) []string {
+	keys := make([]string, 0, len(azSubnetMap))
+	for k := range azSubnetMap {
+		keys = append(keys, string(k))
+	}
+
+	sort.Strings(keys)
+
+	return keys
+}
+
+func GetSortedSubnetNameKeys(subnetMap map[SubnetName]SubnetCidr) []string {
+	keys := make([]string, 0, len(subnetMap))
+	for k := range subnetMap {
+		keys = append(keys, string(k))
+	}
+
+	sort.Strings(keys)
+
+	return keys
 }
