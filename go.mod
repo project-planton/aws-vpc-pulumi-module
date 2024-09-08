@@ -2,7 +2,7 @@ module github.com/plantoncloud/aws-vpc-pulumi-module
 
 go 1.23
 
-replace github.com/plantoncloud/planton-cloud-apis => ../../plantoncloud/planton-cloud-apis
+//replace github.com/plantoncloud/planton-cloud-apis => ../../plantoncloud/planton-cloud-apis
 
 //replace github.com/plantoncloud/stack-job-runner-golang-sdk => ../../plantoncloud/stack-job-runner-golang-sdk
 
@@ -10,7 +10,9 @@ replace github.com/plantoncloud/planton-cloud-apis => ../../plantoncloud/planton
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/plantoncloud/planton-cloud-apis v0.1.51
+	github.com/plantoncloud/planton-cloud-apis v0.1.53
+	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240908135000-2559a6745eda
+	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.59
 	github.com/pulumi/pulumi-aws/sdk/v6 v6.42.1
 	github.com/pulumi/pulumi/sdk/v3 v3.129.0
 )
@@ -52,7 +54,6 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
