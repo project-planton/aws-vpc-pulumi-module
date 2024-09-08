@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
+	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
+	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps/convertstringmaps"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -38,9 +40,8 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 			CidrBlock:          pulumi.String(locals.AwsVpc.Spec.VpcCidr),
 			EnableDnsSupport:   pulumi.Bool(locals.AwsVpc.Spec.IsDnsSupportEnabled),
 			EnableDnsHostnames: pulumi.Bool(locals.AwsVpc.Spec.IsDnsHostnamesEnabled),
-			Tags: pulumi.StringMap{
-				"Name": pulumi.String(locals.AwsVpc.Metadata.Name),
-			},
+			Tags: convertstringmaps.ConvertGoStringMapToPulumiStringMap(
+				stringmaps.AddEntry(locals.AwsTags, "Name", locals.AwsVpc.Metadata.Name)),
 		}, pulumi.Provider(awsProvider))
 	if err != nil {
 		return errors.Wrap(err, "failed to create vpc")
@@ -54,6 +55,8 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 		locals.AwsVpc.Metadata.Name,
 		&ec2.InternetGatewayArgs{
 			VpcId: createdVpc.ID(),
+			Tags: convertstringmaps.ConvertGoStringMapToPulumiStringMap(
+				stringmaps.AddEntry(locals.AwsTags, "Name", locals.AwsVpc.Metadata.Name)),
 		}, pulumi.Parent(createdVpc))
 	if err != nil {
 		return errors.Wrap(err, "failed to create internet-gateway")
@@ -67,9 +70,12 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 		"public-route-table",
 		&ec2.RouteTableArgs{
 			VpcId: createdVpc.ID(),
+			Tags: convertstringmaps.ConvertGoStringMapToPulumiStringMap(
+				stringmaps.AddEntry(locals.AwsTags, "Name",
+					fmt.Sprintf("%s-public", locals.AwsVpc.Metadata.Name))),
 			Routes: ec2.RouteTableRouteArray{
 				&ec2.RouteTableRouteArgs{
-					CidrBlock: pulumi.String("0.0.0.0/0"),
+					CidrBlock: pulumi.String(vars.AllowAllCidrBlock),
 					GatewayId: createdInternetGateway.ID(),
 				},
 			},
@@ -85,16 +91,18 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 
 	// associate route table with public subnets
 	for i, createdPublicSubnet := range createdPublicSubnets {
-		_, err := ec2.NewRouteTableAssociation(ctx, fmt.Sprintf("publicRouteAssoc-%d", i), &ec2.RouteTableAssociationArgs{
-			SubnetId:     createdPublicSubnet.ID(),
-			RouteTableId: createdPublicRouteTable.ID(),
-		})
+		_, err := ec2.NewRouteTableAssociation(ctx,
+			fmt.Sprintf("public-route-assoc-%d", i),
+			&ec2.RouteTableAssociationArgs{
+				RouteTableId: createdPublicRouteTable.ID(),
+				SubnetId:     createdPublicSubnet.ID(),
+			})
 		if err != nil {
 			return errors.Wrap(err, "error associating route table with public subnet")
 		}
 	}
 
-	// NAT Gateway
+	// create nat gateways for each private subnet
 	if locals.AwsVpc.Spec.IsNatGatewayEnabled {
 		if err := natGateways(ctx, awsProvider, createdVpc, createdPrivateSubnets); err != nil {
 			return errors.Wrap(err, "failed to create nat gateways")
