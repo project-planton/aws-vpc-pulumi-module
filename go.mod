@@ -10,7 +10,7 @@ go 1.23
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/plantoncloud/planton-cloud-apis v0.1.53
+	github.com/plantoncloud/planton-cloud-apis v0.1.54
 	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240908135000-2559a6745eda
 	github.com/plantoncloud/stack-job-runner-golang-sdk v0.0.59
 	github.com/pulumi/pulumi-aws/sdk/v6 v6.42.1

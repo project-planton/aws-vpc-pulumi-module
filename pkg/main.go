@@ -85,31 +85,8 @@ func (s *ResourceStack) Resources(ctx *pulumi.Context) error {
 		return errors.Wrap(err, "failed to created route-table for public internet access")
 	}
 
-	createdPrivateSubnetMap, createdPublicSubnetMap, err := subnets(ctx, locals, createdVpc)
-	if err != nil {
+	if err := subnets(ctx, locals, createdVpc, createdPublicRouteTable); err != nil {
 		return errors.Wrap(err, "failed to create subnets")
-	}
-
-	sortedCreatedSubnetNameKeys := localz.GetSortedCreatedSubnetNameKeys(createdPublicSubnetMap)
-	// associate route table with public subnets
-	for _, createdSubnetName := range sortedCreatedSubnetNameKeys {
-		createdSubnet := createdPublicSubnetMap[localz.SubnetName(createdSubnetName)]
-		_, err := ec2.NewRouteTableAssociation(ctx,
-			fmt.Sprintf("public-route-assoc-%s", createdSubnetName),
-			&ec2.RouteTableAssociationArgs{
-				RouteTableId: createdPublicRouteTable.ID(),
-				SubnetId:     createdSubnet.ID(),
-			}, pulumi.Parent(createdPublicRouteTable))
-		if err != nil {
-			return errors.Wrap(err, "error associating route table with public subnet")
-		}
-	}
-
-	// create nat gateways for each private subnet
-	if locals.AwsVpc.Spec.IsNatGatewayEnabled {
-		if err := natGateways(ctx, locals, createdVpc, createdPrivateSubnetMap); err != nil {
-			return errors.Wrap(err, "failed to create nat gateways")
-		}
 	}
 
 	return nil
