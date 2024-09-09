@@ -5,7 +5,6 @@ import (
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
 	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/aws/awstagkeys"
-	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"sort"
 	"strconv"
@@ -98,17 +97,6 @@ func GetSortedAzKeys(azSubnetMap map[AvailabilityZone]map[SubnetName]SubnetCidr)
 func GetSortedSubnetNameKeys(subnetMap map[SubnetName]SubnetCidr) []string {
 	keys := make([]string, 0, len(subnetMap))
 	for k := range subnetMap {
-		keys = append(keys, string(k))
-	}
-
-	sort.Strings(keys)
-
-	return keys
-}
-
-func GetSortedCreatedSubnetNameKeys(createdSubnetMap map[SubnetName]*ec2.Subnet) []string {
-	keys := make([]string, 0, len(createdSubnetMap))
-	for k := range createdSubnetMap {
 		keys = append(keys, string(k))
 	}
 

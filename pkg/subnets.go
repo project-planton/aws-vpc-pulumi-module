@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
@@ -10,12 +11,8 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (privateSubnetMap,
-	publicSubnetMap map[localz.SubnetName]*ec2.Subnet, err error) {
-
-	privateSubnetMap = make(map[localz.SubnetName]*ec2.Subnet, 0)
-	publicSubnetMap = make(map[localz.SubnetName]*ec2.Subnet, 0)
-
+func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc,
+	createdPublicRouteTable *ec2.RouteTable) error {
 	// iterate through azs and create the configured number of public and private subnets per az
 	sortedPrivateAzKeys := localz.GetSortedAzKeys(locals.PrivateAzSubnetMap)
 	// create private subnets
@@ -34,12 +31,16 @@ func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (p
 						stringmaps.AddEntry(locals.AwsTags, "Name", subnetName)),
 				}, pulumi.Parent(createdVpc))
 			if err != nil {
-				return nil, nil,
-					errors.Wrapf(err, "error creating private subnet %s", subnetName)
+				return errors.Wrapf(err, "error creating private subnet %s", subnetName)
 			}
 			ctx.Export(outputs.SubnetIdOutputKey(subnetName), createdSubnet.ID())
 			ctx.Export(outputs.SubnetCidrOutputKey(subnetName), createdSubnet.CidrBlock)
-			privateSubnetMap[localz.SubnetName(subnetName)] = createdSubnet
+
+			if locals.AwsVpc.Spec.IsNatGatewayEnabled {
+				if err := natGateway(ctx, locals, createdVpc, subnetName, createdSubnet); err != nil {
+					return errors.Wrapf(err, "failed to create nat-gateway for %s subnet", subnetName)
+				}
+			}
 		}
 	}
 
@@ -62,14 +63,22 @@ func subnets(ctx *pulumi.Context, locals *localz.Locals, createdVpc *ec2.Vpc) (p
 						stringmaps.AddEntry(locals.AwsTags, "Name", subnetName)),
 				}, pulumi.Parent(createdVpc))
 			if err != nil {
-				return nil, nil,
-					errors.Wrapf(err, "error creating public subnet %s", subnetName)
+				return errors.Wrapf(err, "error creating public subnet %s", subnetName)
 			}
+
 			ctx.Export(outputs.SubnetIdOutputKey(subnetName), createdSubnet.ID())
 			ctx.Export(outputs.SubnetCidrOutputKey(subnetName), createdSubnet.CidrBlock)
-			publicSubnetMap[localz.SubnetName(subnetName)] = createdSubnet
-		}
 
+			_, err = ec2.NewRouteTableAssociation(ctx,
+				fmt.Sprintf("public-route-assoc-%s", subnetName),
+				&ec2.RouteTableAssociationArgs{
+					RouteTableId: createdPublicRouteTable.ID(),
+					SubnetId:     createdSubnet.ID(),
+				}, pulumi.Parent(createdPublicRouteTable))
+			if err != nil {
+				return errors.Wrap(err, "error associating route table with public subnet")
+			}
+		}
 	}
-	return privateSubnetMap, publicSubnetMap, nil
+	return nil
 }

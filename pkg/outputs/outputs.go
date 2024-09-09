@@ -14,44 +14,52 @@ const (
 )
 
 func PulumiOutputsToStackOutputsConverter(pulumiOutputs auto.OutputMap, stackInput *awsvpc.AwsVpcStackInput) *awsvpc.AwsVpcStackOutputs {
-	resp := &awsvpc.AwsVpcStackOutputs{
+	privateAzSubnetMap := localz.GetPrivateAzSubnetMap(stackInput.ApiResource)
+	sortedPrivateAzKeys := localz.GetSortedAzKeys(privateAzSubnetMap)
+	privateSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
+
+	for _, availabilityZone := range sortedPrivateAzKeys {
+		azSubnetMap := privateAzSubnetMap[localz.AvailabilityZone(availabilityZone)]
+		sortedSubnetNames := localz.GetSortedSubnetNameKeys(azSubnetMap)
+		for _, subnetName := range sortedSubnetNames {
+			subnetStackOutputs := &awsvpc.AwsVpcSubnetStackOutputs{
+				Name: subnetName,
+				Id:   autoapistackoutput.GetVal(pulumiOutputs, SubnetIdOutputKey(subnetName)),
+				Cidr: autoapistackoutput.GetVal(pulumiOutputs, SubnetCidrOutputKey(subnetName)),
+			}
+			if stackInput.ApiResource.Spec.IsNatGatewayEnabled {
+				subnetStackOutputs.NatGateway = &awsvpc.AwsVpcNatGatewayStackOutputs{
+					Id:        autoapistackoutput.GetVal(pulumiOutputs, NatGatewayIdOutputKey(subnetName)),
+					PrivateIp: autoapistackoutput.GetVal(pulumiOutputs, NatGatewayPrivateIpOutputKey(subnetName)),
+					PublicIp:  autoapistackoutput.GetVal(pulumiOutputs, NatGatewayPublicIpOutputKey(subnetName)),
+				}
+			}
+			privateSubnetOutputs = append(privateSubnetOutputs, subnetStackOutputs)
+		}
+	}
+
+	publicAzSubnetMap := localz.GetPublicAzSubnetMap(stackInput.ApiResource)
+	sortedPublicAzKeys := localz.GetSortedAzKeys(publicAzSubnetMap)
+	publicSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
+	for _, availabilityZone := range sortedPublicAzKeys {
+		azSubnetMap := publicAzSubnetMap[localz.AvailabilityZone(availabilityZone)]
+		sortedSubnetNames := localz.GetSortedSubnetNameKeys(azSubnetMap)
+		for _, subnetName := range sortedSubnetNames {
+			subnetStackOutputs := &awsvpc.AwsVpcSubnetStackOutputs{
+				Name: subnetName,
+				Id:   autoapistackoutput.GetVal(pulumiOutputs, SubnetIdOutputKey(subnetName)),
+				Cidr: autoapistackoutput.GetVal(pulumiOutputs, SubnetCidrOutputKey(subnetName)),
+			}
+			publicSubnetOutputs = append(publicSubnetOutputs, subnetStackOutputs)
+		}
+	}
+
+	return &awsvpc.AwsVpcStackOutputs{
 		VpcId:             autoapistackoutput.GetVal(pulumiOutputs, VpcId),
 		InternetGatewayId: autoapistackoutput.GetVal(pulumiOutputs, InternetGatewayId),
+		PrivateSubnets:    privateSubnetOutputs,
+		PublicSubnets:     publicSubnetOutputs,
 	}
-
-	privateSubnetMap := localz.GetPrivateAzSubnetMap(stackInput.ApiResource)
-	publicSubnetMap := localz.GetPrivateAzSubnetMap(stackInput.ApiResource)
-
-	privateSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
-	natGatewayOutputs := make([]*awsvpc.AwsVpcNatGatewayStackOutputs, 0)
-	for _, subnetNameCidrMap := range privateSubnetMap {
-		for subnetName, _ := range subnetNameCidrMap {
-			privateSubnetOutputs = append(privateSubnetOutputs, &awsvpc.AwsVpcSubnetStackOutputs{
-				Name: string(subnetName),
-				Id:   autoapistackoutput.GetVal(pulumiOutputs, SubnetIdOutputKey(string(subnetName))),
-				Cidr: autoapistackoutput.GetVal(pulumiOutputs, SubnetCidrOutputKey(string(subnetName))),
-			})
-
-			natGatewayOutputs = append(natGatewayOutputs, &awsvpc.AwsVpcNatGatewayStackOutputs{
-				Id:        autoapistackoutput.GetVal(pulumiOutputs, NatGatewayIdOutputKey(string(subnetName))),
-				PrivateIp: autoapistackoutput.GetVal(pulumiOutputs, NatGatewayPrivateIpOutputKey(string(subnetName))),
-				PublicIp:  autoapistackoutput.GetVal(pulumiOutputs, NatGatewayPublicIpOutputKey(string(subnetName))),
-			})
-		}
-	}
-
-	publicSubnetOutputs := make([]*awsvpc.AwsVpcSubnetStackOutputs, 0)
-	for _, subnetNameCidrMap := range publicSubnetMap {
-		for subnetName, _ := range subnetNameCidrMap {
-			publicSubnetOutputs = append(publicSubnetOutputs, &awsvpc.AwsVpcSubnetStackOutputs{
-				Name: string(subnetName),
-				Id:   autoapistackoutput.GetVal(pulumiOutputs, SubnetIdOutputKey(string(subnetName))),
-				Cidr: autoapistackoutput.GetVal(pulumiOutputs, SubnetCidrOutputKey(string(subnetName))),
-			})
-		}
-	}
-
-	return resp
 }
 
 func SubnetIdOutputKey(subnetName string) string {
