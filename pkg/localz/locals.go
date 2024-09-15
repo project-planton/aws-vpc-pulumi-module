@@ -25,7 +25,7 @@ func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Local
 	locals := &Locals{}
 
 	//assign value for the locals variable to make it available across the project
-	locals.AwsVpc = stackInput.ApiResource
+	locals.AwsVpc = stackInput.Target
 
 	locals.AwsTags = map[string]string{
 		awstagkeys.Resource:     strconv.FormatBool(true),
