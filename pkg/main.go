@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
-	"github.com/plantoncloud/planton-cloud-apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
+	"github.com/plantoncloud/planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps/convertstringmaps"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
