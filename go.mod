@@ -1,8 +1,6 @@
 module github.com/plantoncloud/aws-vpc-pulumi-module
 
-go 1.23.0
-
-toolchain go1.23.1
+go 1.23.1
 
 //replace github.com/plantoncloud/project-planton => ../../plantoncloud/project-planton
 
