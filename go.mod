@@ -9,7 +9,7 @@ go 1.23.1
 require (
 	github.com/pkg/errors v0.9.1
 	github.com/plantoncloud/project-planton/apis v0.0.0-20240928044211-9168d6c7a46b
-	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240928145908-dc3937caf8fa
+	github.com/plantoncloud/pulumi-module-golang-commons v0.0.0-20240928073143-7b29b143661c
 	github.com/pulumi/pulumi-aws/sdk/v6 v6.42.1
 	github.com/pulumi/pulumi/sdk/v3 v3.129.0
 )
