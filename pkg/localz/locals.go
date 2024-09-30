@@ -1,9 +1,8 @@
 package localz
 
 import (
+	awsvpcv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/aws/awsvpc/v1"
 	"fmt"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/commons/apiresource/enums/apiresourcekind"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/provider/aws/awstagkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"sort"
@@ -15,13 +14,13 @@ type SubnetCidr string
 type AvailabilityZone string
 
 type Locals struct {
-	AwsVpc             *awsvpc.AwsVpc
+	AwsVpc             *awsvpcv1.AwsVpc
 	AwsTags            map[string]string
 	PrivateAzSubnetMap map[AvailabilityZone]map[SubnetName]SubnetCidr
 	PublicAzSubnetMap  map[AvailabilityZone]map[SubnetName]SubnetCidr
 }
 
-func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Locals {
+func Initialize(ctx *pulumi.Context, stackInput *awsvpcv1.AwsVpcStackInput) *Locals {
 	locals := &Locals{}
 
 	//assign value for the locals variable to make it available across the project
@@ -31,7 +30,7 @@ func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Local
 		awstagkeys.Resource:     strconv.FormatBool(true),
 		awstagkeys.Organization: locals.AwsVpc.Spec.EnvironmentInfo.OrgId,
 		awstagkeys.Environment:  locals.AwsVpc.Spec.EnvironmentInfo.EnvId,
-		awstagkeys.ResourceKind: apiresourcekind.ApiResourceKind_aws_vpc.String(),
+		awstagkeys.ResourceKind: "aws_vpc",
 		awstagkeys.ResourceId:   locals.AwsVpc.Metadata.Id,
 	}
 
@@ -41,7 +40,7 @@ func Initialize(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) *Local
 	return locals
 }
 
-func GetPrivateAzSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
+func GetPrivateAzSubnetMap(awsVpc *awsvpcv1.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
 	privateAzSubnetMap := make(map[AvailabilityZone]map[SubnetName]SubnetCidr, 0)
 
 	for azIndex, az := range awsVpc.Spec.AvailabilityZones {
@@ -63,7 +62,7 @@ func GetPrivateAzSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[Subne
 	return privateAzSubnetMap
 }
 
-func GetPublicAzSubnetMap(awsVpc *awsvpc.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
+func GetPublicAzSubnetMap(awsVpc *awsvpcv1.AwsVpc) map[AvailabilityZone]map[SubnetName]SubnetCidr {
 	publicAzSubnetMap := make(map[AvailabilityZone]map[SubnetName]SubnetCidr, 0)
 
 	for azIndex, az := range awsVpc.Spec.AvailabilityZones {

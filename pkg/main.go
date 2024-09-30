@@ -1,11 +1,11 @@
 package pkg
 
 import (
+	awsvpcv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/aws/awsvpc/v1"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
-	"github.com/plantoncloud/project-planton/apis/zzgo/cloud/planton/apis/code2cloud/v1/aws/awsvpc"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/datatypes/stringmaps/convertstringmaps"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
@@ -13,7 +13,7 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func Resources(ctx *pulumi.Context, stackInput *awsvpc.AwsVpcStackInput) error {
+func Resources(ctx *pulumi.Context, stackInput *awsvpcv1.AwsVpcStackInput) error {
 	locals := localz.Initialize(ctx, stackInput)
 
 	awsCredential := stackInput.AwsCredential
