@@ -1,7 +1,7 @@
 package main
 
 import (
-	awsvpcv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/apis/provider/aws/awsvpc/v1"
+	awsvpcv1 "buf.build/gen/go/plantoncloud/project-planton/protocolbuffers/go/project/planton/provider/aws/awsvpc/v1"
 	"github.com/pkg/errors"
 	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg"
 	"github.com/plantoncloud/pulumi-module-golang-commons/pkg/stackinput"
