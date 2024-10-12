@@ -3,8 +3,8 @@ package pkg
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/localz"
-	"github.com/plantoncloud/aws-vpc-pulumi-module/pkg/outputs"
+	"github.com/project-planton/aws-vpc-pulumi-module/pkg/localz"
+	"github.com/project-planton/aws-vpc-pulumi-module/pkg/outputs"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
