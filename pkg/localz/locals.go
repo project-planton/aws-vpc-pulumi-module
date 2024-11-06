@@ -28,8 +28,8 @@ func Initialize(ctx *pulumi.Context, stackInput *awsvpcv1.AwsVpcStackInput) *Loc
 
 	locals.AwsTags = map[string]string{
 		awstagkeys.Resource:     strconv.FormatBool(true),
-		awstagkeys.Organization: locals.AwsVpc.Spec.EnvironmentInfo.OrgId,
-		awstagkeys.Environment:  locals.AwsVpc.Spec.EnvironmentInfo.EnvId,
+		awstagkeys.Organization: locals.AwsVpc.Metadata.Org,
+		awstagkeys.Environment:  locals.AwsVpc.Metadata.Env.Id,
 		awstagkeys.ResourceKind: "aws_vpc",
 		awstagkeys.ResourceId:   locals.AwsVpc.Metadata.Id,
 	}
