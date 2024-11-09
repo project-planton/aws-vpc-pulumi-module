@@ -5,8 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/project-planton/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/project-planton/aws-vpc-pulumi-module/pkg/outputs"
-	"github.com/project-planton/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
-	"github.com/project-planton/pulumi-module-golang-commons/pkg/datatypes/stringmaps/convertstringmaps"
+	"github.com/project-planton/project-planton/pkg/pulmod/datatypes/stringmaps"
+	"github.com/project-planton/project-planton/pkg/pulmod/datatypes/stringmaps/convertstringmaps"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )

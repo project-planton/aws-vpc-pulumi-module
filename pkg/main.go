@@ -1,13 +1,13 @@
 package pkg
 
 import (
-	awsvpcv1 "buf.build/gen/go/project-planton/apis/protocolbuffers/go/project/planton/provider/aws/awsvpc/v1"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/project-planton/aws-vpc-pulumi-module/pkg/localz"
 	"github.com/project-planton/aws-vpc-pulumi-module/pkg/outputs"
-	"github.com/project-planton/pulumi-module-golang-commons/pkg/datatypes/stringmaps"
-	"github.com/project-planton/pulumi-module-golang-commons/pkg/datatypes/stringmaps/convertstringmaps"
+	awsvpcv1 "github.com/project-planton/project-planton/apis/go/project/planton/provider/aws/awsvpc/v1"
+	"github.com/project-planton/project-planton/pkg/pulmod/datatypes/stringmaps"
+	"github.com/project-planton/project-planton/pkg/pulmod/datatypes/stringmaps/convertstringmaps"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"

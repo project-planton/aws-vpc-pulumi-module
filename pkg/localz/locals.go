@@ -1,9 +1,9 @@
 package localz
 
 import (
-	awsvpcv1 "buf.build/gen/go/project-planton/apis/protocolbuffers/go/project/planton/provider/aws/awsvpc/v1"
 	"fmt"
-	"github.com/project-planton/pulumi-module-golang-commons/pkg/provider/aws/awstagkeys"
+	awsvpcv1 "github.com/project-planton/project-planton/apis/go/project/planton/provider/aws/awsvpc/v1"
+	"github.com/project-planton/project-planton/pkg/pulmod/provider/aws/awstagkeys"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"sort"
 	"strconv"
